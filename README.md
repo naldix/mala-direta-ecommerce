@@ -93,12 +93,12 @@ pip install pandas faker openpyxl numpy groq python-dotenv jinja2
 ### 2. Configurar variáveis de ambiente
 Crie um arquivo `.env` na raiz do projeto:
 
-GROQ_API_KEY=sua-chave-groq
-EMAIL_REMETENTE=seuemail@gmail.com
-EMAIL_SENHA=sua-senha-de-app
-EMAIL_SMTP=smtp.gmail.com
-EMAIL_PORTA=numero da porta
-EMAIL_DESTINATARIOS=destinatario1@email.com,destinatario2@email.com
+- GROQ_API_KEY=sua-chave-groq
+- EMAIL_REMETENTE=seuemail@gmail.com
+- EMAIL_SENHA=sua-senha-de-app
+- EMAIL_SMTP=smtp.gmail.com
+- EMAIL_PORTA=numero da porta
+- EMAIL_DESTINATARIOS=destinatario1@email.com,destinatario2@email.com
 
 ### 3. Rodar o pipeline completo
 ```bash
@@ -117,7 +117,7 @@ python run_pipeline.py --only-etl       # apenas roda o ETL
 
 ## Exemplo do relatório
 
-> *Print do relatório gerado a ser adicionado aqui.*
+
 
 ## Próximos passos (evolução do projeto)
 
