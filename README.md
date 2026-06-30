@@ -63,8 +63,9 @@ Cada canal de venda (Centauro, Mercado Livre, Dafiti, Netshoes, Amazon, Renner e
 | Envio de e-mail | smtplib (SMTP) |
 | Orquestração | Script Python (`run_pipeline.py`) |
 
-## Estrutura do projeto
+## Estrutura do Projeto
 
+```text
 mala-direta-ecommerce/
 ├── data/
 │   ├── incoming/          # planilha de entrada (export do ERP)
@@ -78,10 +79,12 @@ mala-direta-ecommerce/
 │   ├── report.py              # monta o relatório HTML
 │   └── email_sender.py        # envia o relatório por e-mail
 ├── templates/
-├── output/reports/        # relatórios HTML gerados
+├── output/
+│   └── reports/           # relatórios HTML gerados
 ├── logs/                  # logs de execução
 ├── run_pipeline.py        # orquestrador do pipeline completo
 └── .env                   # credenciais (não versionado)
+```
 
 ## Como executar
 
