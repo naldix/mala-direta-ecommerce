@@ -1,0 +1,14 @@
+.env
+
+# Python
+__pycache__/
+
+# Logs
+logs/
+
+# Dados locais
+data/
+output/
+
+# config
+config/
