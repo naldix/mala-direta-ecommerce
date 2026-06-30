@@ -123,3 +123,4 @@ python run_pipeline.py --only-etl       # apenas roda o ETL
 ## Relatório
 
 ![Relatório](assets/Relatorio.png)
+![E-mail](assets/Email.png)
