@@ -14,6 +14,7 @@ Este projeto automatiza esse fluxo: a partir de uma planilha exportada do ERP, o
 
 ## Arquitetura do pipeline
 
+```text
 Excel (export do ERP)
 │
 ▼
@@ -36,6 +37,7 @@ Relatório HTML (Jinja2)
 │
 ▼
 Envio automático por e-mail (SMTP)
+```
 
 ## KPIs calculados por canal
 
