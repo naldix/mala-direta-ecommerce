@@ -118,12 +118,6 @@ python run_pipeline.py --only-dataset   # apenas gera o dataset
 python run_pipeline.py --only-etl       # apenas roda o ETL
 ```
 
-## Exemplo do relatório
+## Relatório
 
-
-
-## Próximos passos (evolução do projeto)
-
-- Carga diária incremental (hoje o projeto roda com carga única simulando 90 dias de histórico)
-- Agendamento automático via Airflow ou Task Scheduler/cron
-- Arquivo `config.yaml` para centralizar parâmetros de negócio (canais, destinatários, limites de variação)
+![Relatório](assets/Relatorio.png)

@@ -12,3 +12,6 @@ output/
 
 # config
 config/
+
+# prints
+assets/
