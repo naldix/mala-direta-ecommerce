@@ -99,11 +99,10 @@ def gerar_item(canal, data):
     produto = random.choice(PRODUTOS[categoria])
 
     preco_min, preco_max = FAIXA_PRECO[categoria]
-    mkp_min, mkp_max = FAIXA_MARKUP[categoria]
 
     valor_unitario = round(random.uniform(preco_min, preco_max), 2)
-    markup = round(random.uniform(mkp_min, mkp_max), 2)
-    custo_unitario = round(valor_unitario / (1 + markup / 100), 2)
+    custo_unitario = round(random.uniform(valor_unitario * 0.4, valor_unitario * 0.8), 2)
+    markup = round(valor_unitario / custo_unitario, 2)
     qtde = random.randint(1, 3)
     valor_liquido = round(valor_unitario * qtde, 2)
     custo_total = round(custo_unitario * qtde, 2)

@@ -378,7 +378,7 @@ def preparar_periodos(resultados):
                 'faturamento': fmt_moeda(row['faturamento']),
                 'qtd_pedidos': int(row['qtd_pedidos']),
                 'ticket_medio': fmt_moeda(row['ticket_medio']),
-                'markup_medio': f"{row['markup_medio']:.2f}%",
+                'markup_medio': f"{row['markup_medio']:.2f}",
                 'margem_contribuicao': f"{row['margem_contribuicao']:.2f}%",
                 'top_produto': row['top_produto'],
                 'var_faturamento': fmt_pct(row.get('var_faturamento')),
