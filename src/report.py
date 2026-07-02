@@ -31,7 +31,6 @@ def fmt_pct(val):
         return '-'
 
 def fmt_var_class(val):
-    """Retorna classe CSS conforme variação positiva ou negativa."""
     try:
         if val is None:
             return 'neutro'

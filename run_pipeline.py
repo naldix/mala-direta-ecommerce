@@ -21,14 +21,12 @@ logging.basicConfig(
 
 log = logging.getLogger(__name__)
 
-
 class EtapaPipelineError(Exception):
-    """Erro customizado para identificar em qual etapa o pipeline falhou."""
+
     def __init__(self, etapa, mensagem_original):
         self.etapa = etapa
         self.mensagem_original = mensagem_original
         super().__init__(f"[{etapa}] {mensagem_original}")
-
 
 def executar_dataset(skip):
     if skip:
@@ -48,13 +46,12 @@ def executar_dataset(skip):
     except Exception as e:
         raise EtapaPipelineError("GERAÇÃO DE DATASET", str(e))
 
-
 def executar_etl():
     try:
-        rodar_etl()
+        modo = 'inicial' if os.path.exists('data/incoming/vendas_historico.xlsx') else 'diario'
+        rodar_etl(modo=modo)
     except Exception as e:
         raise EtapaPipelineError("ETL", str(e))
-
 
 def executar_analise():
     try:
@@ -74,7 +71,6 @@ def executar_analise():
     except Exception as e:
         raise EtapaPipelineError("ANÁLISE", str(e))
 
-
 def executar_ai_insights(resultados, skip):
     if skip:
         log.info("AI insights ignorados.")
@@ -83,12 +79,10 @@ def executar_ai_insights(resultados, skip):
     try:
         return gerar_insights(resultados)
     except Exception as e:
-        # Falha na IA não deveria travar o pipeline inteiro —
-        # o relatório ainda pode ser enviado sem os insights.
+
         log.error(f"[AI INSIGHTS] Falha ao gerar insights: {e}", exc_info=True)
         print(f"[AVISO] Falha ao gerar insights via IA. Relatório seguirá sem essa seção.")
         return resultados
-
 
 def executar_report(resultados):
     try:
@@ -100,7 +94,6 @@ def executar_report(resultados):
         raise
     except Exception as e:
         raise EtapaPipelineError("RELATÓRIO", str(e))
-
 
 def executar_email(caminho, referencia, skip):
     if skip:
@@ -116,7 +109,6 @@ def executar_email(caminho, referencia, skip):
 
     except Exception as e:
         raise EtapaPipelineError("ENVIO DE E-MAIL", str(e))
-
 
 def main(args):
     log.info("===== PIPELINE INICIADO =====")
@@ -162,7 +154,6 @@ def main(args):
         log.error(f"Falha inesperada no pipeline: {e}", exc_info=True)
         print(f"\n[ERRO] Falha inesperada: {e}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pipeline de Dados E-commerce")

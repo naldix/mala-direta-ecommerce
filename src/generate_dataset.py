@@ -124,7 +124,6 @@ def gerar_item(canal, data):
         'pedido_status': 'FATURADO'
     }
 
-
 def gerar_dataset():
     registros = []
     data_atual = DATA_INICIO
@@ -142,7 +141,6 @@ def gerar_dataset():
         data_atual += timedelta(days=1)
 
     return pd.DataFrame(registros)
-
 
 if __name__ == '__main__':
     print("Gerando dataset...")

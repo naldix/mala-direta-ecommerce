@@ -33,7 +33,6 @@ def ler_relatorio_html(caminho_relatorio):
     with open(caminho_relatorio, 'r', encoding='utf-8') as f:
         return f.read()
 
-
 def montar_email(caminho_relatorio, referencia):
     data_geracao = datetime.now().strftime('%d/%m/%Y')
 

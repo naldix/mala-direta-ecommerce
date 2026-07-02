@@ -1,8 +1,9 @@
 import pandas as pd
 import sqlite3
 import os
+import shutil
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 logging.basicConfig(
     filename='logs/pipeline.log',
@@ -11,12 +12,12 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
     encoding='utf-8'
 )
-
 log = logging.getLogger(__name__)
 
-DB_PATH = 'data/database/vendas.db'
+DB_PATH      = 'data/database/vendas.db'
 DIR_INCOMING = 'data/incoming'
-ARQUIVO = 'vendas_historico.xlsx'
+DIR_PROCESSED = 'data/processed'
+ARQUIVO_HISTORICO = 'vendas_historico.xlsx'
 
 COLUNAS_ESPERADAS = [
     'pedido_numero',
@@ -36,12 +37,13 @@ COLUNAS_ESPERADAS = [
 
 CANAIS_VALIDOS = ['CT', 'ML', 'DF', 'NT', 'AZ', 'RN', 'SN']
 
+
 def get_connection():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     return sqlite3.connect(DB_PATH)
 
 def criar_tabelas():
-    with get_connection() as conn: 
+    with get_connection() as conn:
         conn.execute('''
             CREATE TABLE IF NOT EXISTS vendas (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,6 +67,7 @@ def criar_tabelas():
             CREATE TABLE IF NOT EXISTS carga_controle (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nome_arquivo TEXT UNIQUE,
+                data_referencia TEXT,
                 processado_em TEXT,
                 total_registros INTEGER
             )
@@ -79,13 +82,12 @@ def ja_carregado(nome_arquivo):
         )
         return cursor.fetchone() is not None
 
-
-def registrar_carga(nome_arquivo, total):
+def registrar_carga(nome_arquivo, data_referencia, total):
     with get_connection() as conn:
         conn.execute(
-            '''INSERT INTO carga_controle (nome_arquivo, processado_em, total_registros)
-               VALUES (?, ?, ?)''',
-            (nome_arquivo, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), total)
+            '''INSERT INTO carga_controle (nome_arquivo, data_referencia, processado_em, total_registros)
+               VALUES (?, ?, ?, ?)''',
+            (nome_arquivo, data_referencia, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), total)
         )
 
 def validar(df, nome_arquivo):
@@ -137,42 +139,102 @@ def carregar(df):
         df[colunas].to_sql('vendas', conn, if_exists='append', index=False)
     log.info(f"{len(df)} registros inseridos.")
 
-def rodar_etl():
-    caminho = os.path.join(DIR_INCOMING, ARQUIVO)
+def mover_para_processed(caminho):
+    os.makedirs(DIR_PROCESSED, exist_ok=True)
+    nome = os.path.basename(caminho)
+    destino = os.path.join(DIR_PROCESSED, nome)
+    shutil.move(caminho, destino)
+    log.info(f"Arquivo movido para: {destino}")
+
+def carga_inicial():
+    caminho = os.path.join(DIR_INCOMING, ARQUIVO_HISTORICO)
 
     if not os.path.exists(caminho):
-        msg = f"Arquivo não encontrado: {caminho}"
-        log.error(msg)
-        print(f"[ERRO] {msg}")
-        return
+        print("[ERRO] vendas_historico.xlsx não encontrado em data/incoming/")
+        log.error("vendas_historico.xlsx não encontrado.")
+        return False
 
     criar_tabelas()
 
-    if ja_carregado(ARQUIVO):
-        log.warning("Histórico já foi carregado anteriormente. Ignorando.")
+    if ja_carregado(ARQUIVO_HISTORICO):
+        log.warning("Histórico já carregado. Ignorando.")
         print("[AVISO] Histórico já carregado. Nada a fazer.")
-        return
+        return True
 
-    print("Lendo arquivo...")
+    print("Lendo arquivo histórico...")
     try:
         df = pd.read_excel(caminho)
         log.info(f"Arquivo lido: {len(df)} registros.")
     except Exception as e:
         log.error(f"Erro ao ler arquivo: {e}")
         print(f"[ERRO] {e}")
-        return
+        return False
 
-    if not validar(df, ARQUIVO):
+    if not validar(df, ARQUIVO_HISTORICO):
         print("[ERRO] Validação falhou. Verifique logs/pipeline.log")
-        return
+        return False
 
     df = limpar(df)
     carregar(df)
-    registrar_carga(ARQUIVO, len(df))
+
+    for data in df['pedido_data'].unique():
+        nome_data = f"vendas_{data}.xlsx"
+        if not ja_carregado(nome_data):
+            registrar_carga(nome_data, data, len(df[df['pedido_data'] == data]))
+
+    registrar_carga(ARQUIVO_HISTORICO, 'historico', len(df))
 
     print(f"[OK] {len(df)} registros carregados no banco com sucesso.")
-    log.info("ETL concluído com sucesso.")
+    log.info("Carga inicial concluída.")
+    return True
+
+def carga_diaria():
+    criar_tabelas()
+
+    d1 = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+    nome_arquivo = f"vendas_{d1}.xlsx"
+    caminho = os.path.join(DIR_INCOMING, nome_arquivo)
+
+    if not os.path.exists(caminho):
+        log.warning(f"Arquivo D-1 não encontrado: {nome_arquivo}")
+        print(f"[AVISO] Nenhum arquivo encontrado para D-1 ({d1}). Verifique a pasta {DIR_INCOMING}.")
+        return False
+
+    if ja_carregado(nome_arquivo):
+        log.warning(f"Arquivo já processado: {nome_arquivo}")
+        print(f"[AVISO] Arquivo {nome_arquivo} já foi processado anteriormente.")
+        return True
+
+    print(f"Processando arquivo diário: {nome_arquivo}...")
+    try:
+        df = pd.read_excel(caminho)
+        log.info(f"Arquivo lido: {len(df)} registros.")
+    except Exception as e:
+        log.error(f"Erro ao ler arquivo: {e}")
+        print(f"[ERRO] {e}")
+        return False
+
+    if not validar(df, nome_arquivo):
+        print("[ERRO] Validação falhou. Verifique logs/pipeline.log")
+        return False
+
+    df = limpar(df)
+    carregar(df)
+    registrar_carga(nome_arquivo, d1, len(df))
+    mover_para_processed(caminho)
+
+    print(f"[OK] {len(df)} registros de {d1} carregados com sucesso.")
+    log.info(f"Carga diária concluída: {nome_arquivo}")
+    return True
+
+def rodar_etl(modo='diario'):
+    if modo == 'inicial':
+        return carga_inicial()
+    else:
+        return carga_diaria()
 
 
 if __name__ == '__main__':
-    rodar_etl()
+    import sys
+    modo = sys.argv[1] if len(sys.argv) > 1 else 'diario'
+    rodar_etl(modo)
